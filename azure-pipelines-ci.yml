@@ -1,0 +1,67 @@
+trigger:
+  branches:
+    include:
+      - '*'  # Qualquer branch
+
+pr:
+  branches:
+    include:
+      - master  # PRs para master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+
+# Instalar .NET 8 SDK
+- task: UseDotNet@2
+  displayName: 'Instalar .NET 8 SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '8.0.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+# Verificar versão do .NET
+- script: dotnet --info
+  displayName: 'Verificar versão do .NET instalada'
+
+# Listar todos os projetos (opcional)
+- script: |
+    echo "Projetos encontrados no workspace:"
+    find . -name "*.csproj"
+  displayName: 'Listar todos os projetos'
+
+# Restaurar todos os projetos
+- script: |
+    for proj in $(find . -name "*.csproj"); do
+      echo "Restaurando $proj"
+      dotnet restore "$proj"
+    done
+  displayName: 'Restaurar todos os projetos'
+
+# Compilar todos os projetos
+- script: |
+    for proj in $(find . -name "*.csproj"); do
+      echo "Compilando $proj"
+      dotnet build "$proj" --configuration $(buildConfiguration) --no-restore
+    done
+  displayName: 'Compilar todos os projetos'
+
+# Publicar todos os projetos
+- script: |
+    for proj in $(find . -name "*.csproj"); do
+      echo "Publicando $proj"
+      outputDir=$(Build.ArtifactStagingDirectory)/$(basename $proj .csproj)
+      dotnet publish "$proj" --configuration $(buildConfiguration) --output "$outputDir"
+    done
+  displayName: 'Publicar projetos'
+
+# Publicar artefatos
+- task: PublishBuildArtifacts@1
+  displayName: 'Publicar artefatos'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'fcg-build'

@@ -1,0 +1,43 @@
+trigger:
+  branches:
+    include:
+      - master   # Executa apenas quando houver push na master
+
+pr:
+  branches:
+    include:
+      - master   # Executa apenas para PRs com destino à master
+      
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+
+# Instalar .NET 8 SDK
+- task: UseDotNet@2
+  displayName: 'Instalar .NET 8 SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '8.0.x'
+
+# Restaurar, buildar e publicar todos os projetos
+- script: |
+    echo "Encontrando todos os projetos .csproj..."
+    for proj in $(find . -name "*.csproj"); do
+      echo "----------------------------------------"
+      echo "Processando $proj"
+      dotnet restore "$proj"
+      dotnet build "$proj" --configuration $(buildConfiguration) --no-restore
+      dotnet publish "$proj" --configuration $(buildConfiguration) --output "$(Build.ArtifactStagingDirectory)"
+    done
+  displayName: 'Restaurar, compilar e publicar todos os projetos'
+
+# Publicar artefatos
+- task: PublishBuildArtifacts@1
+  displayName: 'Publicar artefatos'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'fcg-build'
