@@ -21,7 +21,7 @@ A arquitetura é organizada em camadas bem definidas, garantindo que regras de n
 ## 📦 Tecnologias Utilizadas
 
 - 🧠 **ASP.NET Core 8.0**
-- 🛢️ **SQL Server 2022** (containerizado via Docker)
+- 🛢️ **PostgreSQL 16** (containerizado via Docker)
 - 🧱 **Entity Framework Core**
 - 🌐 **RESTful APIs**
 - 🧼 **Clean Architecture**
